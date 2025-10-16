@@ -1,0 +1,9 @@
+CompanyName=@game_play267
+FileDescription=T7ES3 Screen Capture Advanced
+FileVersion=%%VERSION%%
+InternalName=T7ES3 Screen Capture Advanced
+OriginalFilename=t7es3sca.exe
+ProductName=T7ES3 Screen Capture Advanced
+ProductVersion=%%VERSION%%
+LegalCopyright=© 2025 Philip
+Comments=Built on %%DATETIME%% | Git Tag: %%GIT_TAG%%

@@ -1,0 +1,21 @@
+
+[20250808_21] Built t7es3scaLocalBuild_20250808_214741.exe with embedded files
+[20250808_21] Built t7es3scaLocalBuild_20250808_215025.exe with embedded files
+[20250809_00] Built t7es3scaLocalBuild_20250809_002941.exe with embedded files
+[20250809_00] Built t7es3scaLocalBuild_20250809_004105.exe with embedded files
+[20250809_00] Built t7es3scaLocalBuild_20250809_004304.exe with embedded files
+[20250809_09] Built t7es3scaLocalBuild_20250809_092314.exe with embedded files
+[20250809_09] Built t7es3scaLocalBuild_20250809_092515.exe with embedded files
+[20250809_09] Built t7es3scaLocalBuild_20250809_093014.exe with embedded files
+[20250809_10] Built t7es3scaLocalBuild_20250809_102512.exe with embedded files
+[20250809_10] Built t7es3scaLocalBuild_20250809_104258.exe with embedded files
+[20250810_05] Built t7es3scaLocalBuild_20250810_055541.exe with embedded files
+[20250810_06] Built t7es3scaLocalBuild_20250810_061257.exe with embedded files
+[20250810_06] Built t7es3scaLocalBuild_20250810_062407.exe with embedded files
+[20250810_06] Built t7es3scaLocalBuild_20250810_062711.exe with embedded files
+[20250810_10] Built t7es3scaLocalBuild_20250810_100927.exe with embedded files
+[20250810_10] Built t7es3scaLocalBuild_20250810_101405.exe with embedded files
+[20250810_11] Built t7es3scaLocalBuild_20250810_113814.exe with embedded files
+[20250810_12] Built t7es3scaLocalBuild_20250810_121000.exe with embedded files
+[20250810_14] Built t7es3scaLocalBuild_20250810_144038.exe with embedded files
+[20250810_22] Built t7es3scaLocalBuild_20250810_221448.exe with embedded files

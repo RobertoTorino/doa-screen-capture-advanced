@@ -1,0 +1,154 @@
+# T7ES3 continuous integration workflow configuration
+name: CI Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up UTF-8 and PowerShell output
+        shell: pwsh
+        run: |
+          $OutputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          Write-Host ":: Using PowerShell version: $($PSVersionTable.PSVersion)"
+
+      - name: Build EXE, move to root, UPX and create ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $repoRoot     = $env:GITHUB_WORKSPACE
+          $baseFile     = Join-Path $repoRoot "ahk\Compiler\Unicode 32-bit.bin"
+          $ahkCompiler  = Join-Path $repoRoot "ahk\Compiler\Ahk2Exe.exe"
+          $mediaFolder  = Join-Path $repoRoot "t7es3_media"
+          $input        = Join-Path $repoRoot "t7es3sca.ahk"
+          $output       = Join-Path $repoRoot "t7es3sca.exe"
+          $icon         = Join-Path $repoRoot "t7es3_media\default.ico"
+          $iniPath      = "t7es3.ini"
+          $upxPath      = Join-Path $repoRoot "upx\upx.exe"
+          $versionTxt   = Join-Path $repoRoot "version.txt"
+          $versionDat   = Join-Path $repoRoot "version.dat"
+          $toolsFolder  = Join-Path $repoRoot "t7es3_tools"
+          $extraAssets  = @("README.txt", "t7es3.ini", "LICENSE")
+          
+          $requiredFiles = @($ahkCompiler,$baseFile, $input, "$toolsFolder\\vgmstream-cli.exe")
+          
+          foreach ($file in $requiredFiles) {
+            if (!(Test-Path $file)) {
+              Write-Error ":: Required file not found: $file"
+              exit 1
+            }
+            Write-Host ":: Found: $file"
+          }
+
+          foreach ($file in @($baseFile, $ahkCompiler, $input, $icon, $iniPath)) {
+          if (!(Test-Path $file)) {
+          Write-Error "Required file missing: $file"
+          exit 1
+            } else {
+              Write-Host ":: Found: $file"
+            }
+          }
+
+          $compileJob = Start-Process -FilePath $ahkCompiler `
+          -ArgumentList "/in `"$input`" /out `"$output`" /icon `"$icon`" /base `"$baseFile`" /silent" `
+          -NoNewWindow -PassThru -Wait -ErrorAction Stop
+          
+          if ($compileJob.ExitCode -ne 0) {
+            Write-Error "Ahk2Exe failed with exit code $($compileJob.ExitCode)"
+            exit 1
+            }
+
+          # Always move EXE to $env:GITHUB_WORKSPACE
+          $repoRoot = $env:GITHUB_WORKSPACE
+          $compiledExe = Join-Path $PWD $output
+          $finalExe    = $output
+
+          # Normal move/copy logic
+          if ((Test-Path $compiledExe) -and ($compiledExe -ne $finalExe)) {
+            Move-Item $compiledExe $finalExe -Force
+            Write-Host ":: Moved EXE to $finalExe"
+          }
+
+          # Deep magic: if not found, check hardcoded place and copy
+          if (!(Test-Path $finalExe)) {
+            $knownGood = "D:\a\t7es3-screen-capture-advanced\t7es3-screen-capture-advanced\t7es3sca.exe"
+            if (Test-Path $knownGood) {
+              Write-Host ":: Found EXE at $knownGood after all! Copying to $finalExe"
+              Copy-Item $knownGood $finalExe -Force
+            }
+          }
+          
+          Write-Host ":: Looking for output exe in current folder and repo root..."
+            
+          Get-ChildItem -Path $PWD -Filter "t7es3sca.exe" -Recurse | ForEach-Object { Write-Host "Found EXE at $($_.FullName)" }
+          Get-ChildItem -Path $repoRoot -Filter "t7es3sca.exe" -Recurse | ForEach-Object { Write-Host ":: Found EXE at $($_.FullName)" }
+
+          Write-Host ":: Looking for output at: $finalExe"
+          Start-Sleep -Seconds 2
+          if (!(Test-Path $finalExe)) {
+            Write-Error ":: Build failed — output exe still not found at $finalExe"
+            exit 1
+          }
+
+          # UPX
+          Write-Host ":: Compressing exe..."
+          if (Test-Path $$upxPath) {
+            & $upxPath --best --lzma $finalExe
+          }
+
+          # ZIP
+          $toZip = @($finalExe)
+          
+          foreach ($file in @($ahkCompiler, $baseFile, $input, $icon)) {
+            if (!(Test-Path $file)) {
+            Write-Error "Required file missing: $file"
+            exit 1
+              } else {
+                Write-Host ":: Found: $file"
+              }
+            }
+          
+          foreach ($folder in @($mediaFolder, $toolsFolder)) {
+            if (Test-Path $folder) {
+              $files = Get-ChildItem -Path $folder -Recurse -File | Select-Object -ExpandProperty FullName
+              $toZip += $files
+              Write-Host ":: Added folder: $folder"
+            } else {
+              Write-Warning "Missing folder: $folder"
+            }
+          }
+          
+          foreach ($asset in $extraAssets) {
+            $assetAbs = Join-Path $repoRoot $asset
+            if (Test-Path $assetAbs) {
+              $toZip += $assetAbs
+              Write-Host ":: Added to zip: $assetAbs"
+            } else {
+              Write-Warning "Not adding (missing): $assetAbs"
+            }
+          }
+          
+          Compress-Archive -Path $toZip -DestinationPath (Join-Path $repoRoot $zipName) -Force
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            t7es3sca.exe
+            t7es3sca_release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
